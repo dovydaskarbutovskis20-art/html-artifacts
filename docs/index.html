@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>html-artifacts — a Claude skill</title>
+<meta name="description" content="A Claude skill that operationalizes Thariq Shihipar's 'Unreasonable Effectiveness of HTML' — turning prompts for plans, comparisons, reports, explainers and editors into self-contained HTML artifacts instead of markdown."/>
+<meta property="og:title" content="html-artifacts — a Claude skill"/>
+<meta property="og:description" content="Markdown is a poor format for the things agents now make. This skill teaches Claude when to make an HTML artifact instead — and when to leave well enough alone."/>
+<style>
+:root {
+  --bg: #fafaf7; --surface: #ffffff; --surface-2: #f3f2ec;
+  --ink: #1a1a1f; --ink-soft: #555560; --ink-mute: #8a8a92;
+  --rule: #e7e5df; --rule-strong: #d6d3c8;
+  --accent: #7c3aed; --accent-bg: rgba(124, 58, 237, 0.06);
+  --warn: #b45309; --good: #15803d;
+  --serif: Charter, "Iowan Old Style", "Source Serif 4", ui-serif, Georgia, serif;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e12; --surface: #16161c; --surface-2: #1c1c24;
+    --ink: #f1f1f4; --ink-soft: #a8a8b3; --ink-mute: #6c6c76;
+    --rule: #2a2a32; --rule-strong: #3a3a46;
+    --accent: #a78bfa; --accent-bg: rgba(167, 139, 250, 0.08);
+    --warn: #fbbf24; --good: #4ade80;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body { background: var(--bg); color: var(--ink); margin: 0; }
+body {
+  font: 17px/1.6 var(--serif);
+  font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+}
+a { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); transition: border-color .12s; }
+a:hover { border-bottom-color: var(--accent); }
+code { font: .92em var(--mono); padding: 1px 5px; background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; }
+em { font-style: italic; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+.wrap-narrow { max-width: 42em; margin: 0 auto; padding: 0 1.5rem; }
+
+/* Top bar */
+.bar {
+  border-bottom: 1px solid var(--rule);
+  font: 13px var(--sans);
+  color: var(--ink-soft);
+}
+.bar .wrap { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .5em; padding-top: .9rem; padding-bottom: .9rem; }
+.bar .repo a { color: var(--ink); border-bottom-color: var(--rule); font-family: var(--mono); font-size: 12px; }
+.bar .repo a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+.bar .lineage { color: var(--ink-mute); }
+.bar .lineage a { color: var(--ink-soft); border-bottom-color: var(--rule); }
+.bar .lineage a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Hero */
+header.hero { padding: 5.5rem 0 4rem; }
+header.hero .eyebrow {
+  font: 600 12px var(--sans);
+  text-transform: uppercase; letter-spacing: .14em;
+  color: var(--accent);
+  margin-bottom: 1.6em;
+}
+header.hero .eyebrow a { color: inherit; border-bottom-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+header.hero h1 {
+  font: 600 clamp(2.4rem, 6vmin, 3.6rem)/1.05 var(--serif);
+  letter-spacing: -.02em;
+  margin: 0 0 .55em;
+  max-width: 19ch;
+}
+header.hero .headline-em { color: var(--accent); font-style: italic; }
+header.hero .lead {
+  font-size: 1.18rem; line-height: 1.55; color: var(--ink-soft);
+  max-width: 38em; margin: 0 0 1em;
+}
+header.hero .lead em { color: var(--ink); font-style: italic; }
+header.hero .lead-small {
+  font: 14px/1.5 var(--sans); color: var(--ink-mute);
+  max-width: 38em; margin: 1.5em 0 0;
+}
+header.hero .actions { margin-top: 2.2em; display: flex; gap: .7em; flex-wrap: wrap; align-items: center; }
+header.hero .actions a {
+  display: inline-flex; align-items: center; gap: .5em;
+  padding: .65em 1.15em; border-radius: 3px;
+  font: 600 14px var(--sans); border-bottom: none;
+  white-space: nowrap;
+}
+header.hero .actions .primary { background: var(--accent); color: white; border: 1px solid var(--accent); }
+header.hero .actions .primary:hover { filter: brightness(1.08); }
+header.hero .actions .secondary { background: transparent; color: var(--ink); border: 1px solid var(--rule-strong); font-family: var(--mono); font-weight: 500; }
+header.hero .actions .secondary:hover { border-color: var(--accent); color: var(--accent); }
+header.hero .actions code { background: transparent; border: none; padding: 0; font-size: .92em; }
+
+/* Section primitives */
+section { padding: 4rem 0; }
+section + section { padding-top: 0; }
+section .head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1em;
+  margin-bottom: 1.6rem; padding-bottom: .55rem;
+  border-bottom: 1px solid var(--rule);
+}
+section .head h2 { font-size: 1.6rem; margin: 0; letter-spacing: -.008em; font-weight: 600; }
+section .head .cat { font: 600 12px var(--sans); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-mute); }
+section p.intro { color: var(--ink-soft); margin: 0 0 1.8rem; max-width: 42em; }
+
+/* Thesis section */
+section.thesis { padding: 1rem 0 3rem; }
+section.thesis h2 { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--ink-mute); margin: 0 0 1.2em; }
+section.thesis p { max-width: 38em; margin: .9em 0; }
+section.thesis p + p { margin-top: 1.1em; }
+
+/* Show-don't-tell figure */
+figure.demo {
+  margin: 2.5rem 0 0;
+  padding: 0;
+}
+figure.demo > figcaption {
+  font: 13px var(--sans); color: var(--ink-mute);
+  text-transform: uppercase; letter-spacing: .08em; font-weight: 600;
+  margin-bottom: .9em;
+}
+figure.demo > figcaption b { color: var(--ink); font-weight: 600; }
+.demo-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem;
+}
+@media (max-width: 720px) { .demo-row { grid-template-columns: 1fr; } }
+.demo-pane {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 1.1rem 1.2rem 1.2rem;
+  display: flex; flex-direction: column;
+}
+.demo-pane .label {
+  font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-mute); margin-bottom: .9em;
+}
+.demo-pane.html .label { color: var(--accent); }
+.demo-pane pre {
+  font: 12.5px/1.5 var(--mono); color: var(--ink-soft);
+  background: transparent; border: none; padding: 0; margin: 0; flex: 1;
+  overflow: hidden; white-space: pre-wrap;
+}
+.demo-pane .note {
+  font: italic 13px/1.4 var(--serif); color: var(--ink-mute);
+  margin-top: 1em; padding-top: .8em; border-top: 1px dashed var(--rule);
+}
+.demo-pane.html .cells {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: .55em; flex: 1;
+}
+.demo-pane.html .cell {
+  padding: .55em .6em;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font: 12px var(--sans);
+  display: flex; flex-direction: column; gap: .25em;
+}
+.demo-pane.html .cell b { font: 600 11px var(--mono); color: var(--accent); }
+.demo-pane.html .cell .meta { color: var(--ink-mute); font-size: 11px; }
+
+/* Examples grid */
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4rem; }
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+a.card {
+  display: flex; flex-direction: column;
+  padding: 1.4rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--ink);
+  transition: border-color .14s, transform .08s, box-shadow .14s;
+  position: relative;
+  overflow: hidden;
+}
+a.card:hover { border-color: var(--accent); transform: translateY(-1px); }
+a.card .fingerprint {
+  height: 56px; margin-bottom: 1.1em;
+  display: flex; align-items: center;
+  color: var(--ink-mute);
+}
+a.card .fingerprint svg { width: 100%; height: 100%; display: block; }
+a.card:hover .fingerprint { color: var(--accent); }
+a.card .num { position: absolute; top: 1rem; right: 1.25rem; font: 600 11px var(--mono); color: var(--ink-mute); letter-spacing: .04em; }
+a.card .cat { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: .55em; }
+a.card h3 { margin: 0 0 .4em; font-size: 1.12rem; line-height: 1.3; letter-spacing: -.005em; font-weight: 600; }
+a.card p { margin: 0 0 1.2em; color: var(--ink-soft); font-size: .95rem; line-height: 1.5; flex: 1; }
+a.card .file { font: 12px var(--mono); color: var(--ink-mute); }
+a.card .file::after { content: " →"; color: var(--accent); }
+
+/* Skill structure (hub-and-spokes) */
+section.structure { padding: 4rem 0 4.5rem; }
+.hub-wrap {
+  margin: 1.5rem 0 .5rem;
+  padding: 1.5rem 0;
+  display: grid; place-items: center;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  background: linear-gradient(180deg, transparent 0%, var(--accent-bg) 50%, transparent 100%);
+}
+.hub-wrap svg { max-width: 100%; height: auto; }
+.hub-fallback { display: none; list-style: none; padding: 0; margin: 0; width: 100%; max-width: 480px; font: 14px/1.5 var(--sans); }
+.hub-fallback li { padding: .55em 0; border-bottom: 1px dashed var(--rule); color: var(--ink-soft); display: flex; flex-direction: column; gap: .15em; }
+.hub-fallback li:last-child { border-bottom: none; }
+.hub-fallback li code { font-size: .92em; color: var(--ink); padding: 0; background: transparent; border: none; }
+.hub-fallback li.hub-center { background: var(--accent-bg); padding: .8em 1em; border-radius: 4px; border: 1px solid var(--accent); border-bottom: 1px solid var(--accent); margin-bottom: .6em; }
+.hub-fallback li.hub-center code { color: var(--accent); font-weight: 600; }
+.hub-fallback li.hub-center span { font-size: 12px; color: var(--ink-soft); }
+@media (max-width: 720px) {
+  .hub-wrap svg { display: none; }
+  .hub-fallback { display: block; }
+}
+.hub-legend {
+  display: flex; gap: 1.5em 2em; flex-wrap: wrap;
+  font: 13px var(--sans); color: var(--ink-soft);
+  margin-top: 1.5rem;
+}
+.hub-legend .item { display: flex; align-items: center; gap: .5em; }
+.hub-legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Carve-out section */
+section.carveout { padding: 4rem 0; }
+section.carveout > .wrap > p.intro { max-width: 42em; }
+.carve-list {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem 1.8rem;
+  margin-top: 1.6rem;
+}
+@media (max-width: 720px) { .carve-list { grid-template-columns: 1fr; } }
+.carve {
+  display: flex; gap: 1em; padding: 1.1em 0;
+  border-top: 1px solid var(--rule);
+}
+.carve:nth-child(1), .carve:nth-child(2) { border-top: none; padding-top: 0; }
+@media (max-width: 720px) { .carve:nth-child(2) { border-top: 1px solid var(--rule); padding-top: 1.1em; } }
+.carve .strike {
+  flex-shrink: 0; width: 22px; height: 22px;
+  border: 1.5px solid var(--ink-mute);
+  border-radius: 50%; position: relative;
+  margin-top: .15em;
+}
+.carve .strike::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 12px; height: 1.5px; background: var(--ink-mute);
+  top: 50%; transform: translateY(-50%);
+  left: 50%; margin-left: -6px;
+}
+.carve h3 { font: 600 1rem/1.3 var(--serif); margin: 0 0 .25em; color: var(--ink); }
+.carve p { margin: 0; font-size: .95rem; line-height: 1.5; color: var(--ink-soft); }
+.carve p code { font-size: .85em; }
+
+/* Meta — worry/response */
+section.meta { padding: 4rem 0; }
+section.meta > .wrap-narrow > h2 { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--ink-mute); margin: 0 0 1.4em; }
+section.meta blockquote {
+  margin: 0 0 2rem; padding: 0 0 0 1.4em;
+  border-left: 3px solid var(--accent);
+  font: italic 1.2rem/1.45 var(--serif);
+  color: var(--ink);
+}
+section.meta blockquote cite {
+  display: block; margin-top: .7em;
+  font: 13px var(--sans); color: var(--ink-mute); font-style: normal;
+}
+.wr {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: .9em 1.6em;
+  margin-top: 1.5em;
+  padding-top: 1.5em;
+  border-top: 1px solid var(--rule);
+}
+.wr dt {
+  font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .1em;
+  color: var(--warn); padding-top: .15em; min-width: 7em;
+}
+.wr dt.r { color: var(--accent); }
+.wr dd { margin: 0; font-size: 1rem; line-height: 1.55; color: var(--ink-soft); }
+.wr dd b { color: var(--ink); font-weight: 600; }
+.wr dd code { font-size: .85em; }
+
+/* Install */
+section.install { padding: 4rem 0; }
+.install-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem;
+  margin-top: 1.5rem;
+}
+@media (max-width: 720px) { .install-cards { grid-template-columns: 1fr; } }
+.install-card {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 4px; padding: 1.4rem 1.5rem;
+}
+.install-card .target { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: .6em; }
+.install-card h3 { margin: 0 0 .8em; font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
+.install-card ol { margin: 0; padding-left: 1.2em; font-size: .95rem; line-height: 1.55; color: var(--ink-soft); }
+.install-card ol li { margin: .35em 0; }
+.install-card pre {
+  background: var(--bg); border: 1px solid var(--rule); border-radius: 3px;
+  padding: .8em 1em; margin: .8em 0 .3em;
+  font: 12.5px/1.5 var(--mono); color: var(--ink);
+  overflow-x: auto;
+}
+.install-card .time { font: 11px var(--mono); color: var(--ink-mute); margin-top: 1em; display: block; }
+
+/* Footer */
+footer.foot {
+  margin-top: 3rem;
+  padding: 2.5rem 0 3rem;
+  border-top: 1px solid var(--rule);
+  font: 14px/1.55 var(--sans);
+  color: var(--ink-soft);
+}
+footer.foot .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 2rem; }
+@media (max-width: 720px) { footer.foot .wrap { grid-template-columns: 1fr; } }
+footer.foot h3 { font: 600 11px var(--sans); text-transform: uppercase; letter-spacing: .12em; color: var(--ink); margin: 0 0 .9em; }
+footer.foot p { margin: .6em 0; }
+footer.foot ul { list-style: none; padding: 0; margin: 0; }
+footer.foot ul li { margin: .35em 0; }
+footer.foot a { color: var(--ink); border-bottom-color: var(--rule); }
+footer.foot a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+footer.foot .colophon {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  color: var(--ink-mute);
+  grid-column: 1 / -1;
+}
+footer.foot .colophon code { font-size: .92em; }
+</style>
+</head>
+<body>
+
+<!-- ─── top bar ─────────────────────────────────────────── -->
+<div class="bar">
+  <div class="wrap">
+    <span class="repo"><a href="https://github.com/dogum/html-artifacts">github.com/dogum/html-artifacts</a></span>
+    <span class="lineage">companion to <a href="https://thariqs.github.io/html-effectiveness/">Thariq's "Unreasonable Effectiveness of HTML"</a></span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ─── hero ────────────────────────────────────────────── -->
+<header class="hero">
+  <div class="eyebrow">A Claude skill, by way of <a href="https://thariqs.github.io/html-effectiveness/">Thariq Shihipar's argument</a></div>
+  <h1>Markdown is a poor format for the things <span class="headline-em">agents now make</span>.</h1>
+  <p class="lead">Plans, comparisons, code reviews, status reports, throwaway editors — they read dramatically better as self-contained HTML than as markdown documents. This skill teaches Claude when to make an HTML artifact instead, and equally important, when to <em>leave well enough alone</em>.</p>
+  <p class="lead-small">Six artifacts below, each produced by the skill in response to a real prompt. This page is itself one of them.</p>
+
+  <div class="actions">
+    <a class="primary" href="https://github.com/dogum/html-artifacts/raw/main/html-artifacts.skill">Download <code>.skill</code> →</a>
+    <a class="secondary" href="https://github.com/dogum/html-artifacts">github →</a>
+  </div>
+</header>
+
+<!-- ─── thesis: short framing + show-don't-tell ─────────── -->
+<section class="thesis">
+  <h2>The thesis, briefly</h2>
+  <p>Markdown is optimized for <em>documents</em> — files you edit by hand, diff in version control, scroll through linearly. Agents are increasingly producing <em>artifacts</em>: things you read once and act on, share by link, or manipulate. For those, markdown's restrictions actively obscure the content.</p>
+  <p>HTML lifts those restrictions. Side-by-side comparison instead of stacked sections. A real flowchart instead of ASCII boxes. A live demo instead of paragraphs about how something would feel. A throwaway editor that round-trips back to markdown so you stay in the loop.</p>
+
+  <figure class="demo">
+    <figcaption>The same prompt — <b>"compare three approaches to debouncing"</b> — in both formats.</figcaption>
+    <div class="demo-row">
+      <div class="demo-pane md">
+        <div class="label">As markdown</div>
+<pre>## Approach 1: inline useEffect
+- pro: zero deps
+- pro: easy to debug
+- con: duplicated everywhere
+
+## Approach 2: custom hook
+- pro: reusable
+- pro: testable
+- con: one more file
+
+## Approach 3: library
+- pro: edge cases handled
+- pro: well-tested
+- con: +1.4 kb</pre>
+        <div class="note">Reader holds 1, then 2, then 3 in their head while scrolling. The shape of the comparison is in their working memory, not on the page.</div>
+      </div>
+      <div class="demo-pane html">
+        <div class="label">As HTML</div>
+        <div class="cells">
+          <div class="cell"><b>01 inline</b><span>0 deps</span><span class="meta">+0 kb</span></div>
+          <div class="cell"><b>02 hook</b><span>reusable</span><span class="meta">+0.2 kb</span></div>
+          <div class="cell"><b>03 library</b><span>battle-tested</span><span class="meta">+1.4 kb</span></div>
+        </div>
+        <div class="note">Reader scans across. The comparison is on the page, not in their head. They pick one.</div>
+      </div>
+    </div>
+  </figure>
+</section>
+
+<!-- ─── examples ────────────────────────────────────────── -->
+<section class="examples" id="examples">
+  <div class="head">
+    <h2>Examples</h2>
+    <span class="cat">six artifacts · six categories</span>
+  </div>
+  <p class="intro">Each is a self-contained <code>.html</code> file. None has a build step; none calls a server at view time; each is the kind of artifact the skill produces on prompt. Open any of them directly.</p>
+
+  <div class="grid">
+
+    <a class="card" href="examples/01-sse-comparison.html">
+      <div class="fingerprint" aria-hidden="true">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none">
+          <g fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="6"   y="6" width="64" height="44" rx="3"/>
+            <rect x="78"  y="6" width="64" height="44" rx="3"/>
+            <rect x="150" y="6" width="64" height="44" rx="3"/>
+          </g>
+          <g fill="currentColor" opacity=".5">
+            <rect x="14"  y="14" width="32" height="2"/>
+            <rect x="14"  y="20" width="48" height="2"/>
+            <rect x="14"  y="30" width="40" height="1.5"/>
+            <rect x="14"  y="35" width="44" height="1.5"/>
+            <rect x="14"  y="42" width="20" height="2"/>
+            <rect x="86"  y="14" width="32" height="2"/>
+            <rect x="86"  y="20" width="48" height="2"/>
+            <rect x="86"  y="30" width="40" height="1.5"/>
+            <rect x="86"  y="35" width="44" height="1.5"/>
+            <rect x="86"  y="42" width="20" height="2"/>
+            <rect x="158" y="14" width="32" height="2"/>
+            <rect x="158" y="20" width="48" height="2"/>
+            <rect x="158" y="30" width="40" height="1.5"/>
+            <rect x="158" y="35" width="44" height="1.5"/>
+            <rect x="158" y="42" width="20" height="2"/>
+          </g>
+        </svg>
+      </div>
+      <span class="num">01</span>
+      <span class="cat">Exploration &amp; planning</span>
+      <h3>Three ways to do SSE streaming in Hono</h3>
+      <p>Three approaches in three columns, identical structure. Code, pro/con tables, hard metrics, and an actual recommendation at the bottom — the thing markdown structurally can't do.</p>
+      <span class="file">01-sse-comparison.html</span>
+    </a>
+
+    <a class="card" href="examples/02-iri-explainer.html">
+      <div class="fingerprint" aria-hidden="true">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none">
+          <g fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="6"   y="6" width="142" height="44" rx="3"/>
+            <rect x="156" y="6" width="58"  height="44" rx="3"/>
+          </g>
+          <g fill="currentColor" opacity=".5">
+            <rect x="14" y="13" width="80"  height="2.4"/>
+            <rect x="14" y="20" width="120" height="1.5"/>
+            <rect x="14" y="25" width="100" height="1.5"/>
+          </g>
+          <!-- live demo box inside main -->
+          <rect x="14" y="30" width="124" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/>
+          <circle cx="76" cy="37" r="4" fill="currentColor" opacity=".7"/>
+          <line x1="22" y1="37" x2="130" y2="37" stroke="currentColor" stroke-width="1" opacity=".4"/>
+          <!-- glossary -->
+          <g fill="currentColor" opacity=".5">
+            <rect x="162" y="13" width="32" height="1.5"/>
+            <rect x="162" y="18" width="46" height="1.5"/>
+            <rect x="162" y="23" width="32" height="1.5"/>
+            <rect x="162" y="28" width="46" height="1.5"/>
+            <rect x="162" y="33" width="32" height="1.5"/>
+            <rect x="162" y="38" width="46" height="1.5"/>
+            <rect x="162" y="43" width="38" height="1.5"/>
+          </g>
+        </svg>
+      </div>
+      <span class="num">02</span>
+      <span class="cat">Research &amp; learning</span>
+      <h3>How a quarter-car model computes IRI</h3>
+      <p>Concept explainer with a live golden-car simulation — drag the bump amplitude up, watch IRI climb. Comparison to RMS-of-profile, marginal glossary, "where you'll meet it."</p>
+      <span class="file">02-iri-explainer.html</span>
+    </a>
+
+    <a class="card" href="examples/03-triage-editor.html">
+      <div class="fingerprint" aria-hidden="true">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none">
+          <g fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="6"   y="6" width="50" height="44" rx="3"/>
+            <rect x="60"  y="6" width="50" height="44" rx="3"/>
+            <rect x="114" y="6" width="50" height="44" rx="3"/>
+            <rect x="168" y="6" width="46" height="44" rx="3"/>
+          </g>
+          <!-- column accents top -->
+          <g>
+            <rect x="6"   y="6" width="50" height="3" fill="#dc2626"/>
+            <rect x="60"  y="6" width="50" height="3" fill="#d97706"/>
+            <rect x="114" y="6" width="50" height="3" fill="#2563eb"/>
+            <rect x="168" y="6" width="46" height="3" fill="#6b7280"/>
+          </g>
+          <!-- mini cards in columns -->
+          <g fill="currentColor" opacity=".4">
+            <rect x="10"  y="14" width="42" height="6" rx="1"/>
+            <rect x="10"  y="22" width="42" height="6" rx="1"/>
+            <rect x="10"  y="30" width="42" height="6" rx="1"/>
+            <rect x="64"  y="14" width="42" height="6" rx="1"/>
+            <rect x="64"  y="22" width="42" height="6" rx="1"/>
+            <rect x="118" y="14" width="42" height="6" rx="1"/>
+            <rect x="118" y="22" width="42" height="6" rx="1"/>
+            <rect x="118" y="30" width="42" height="6" rx="1"/>
+            <rect x="172" y="14" width="38" height="6" rx="1"/>
+          </g>
+        </svg>
+      </div>
+      <span class="num">03</span>
+      <span class="cat">Custom editor</span>
+      <h3>Sprint triage board</h3>
+      <p>Eight pre-filled tickets, drag between Now / Next / Later / Cut, click tags to filter. Ends with the non-negotiable feature: a <em>copy as markdown</em> button that round-trips your work back into a paste-able doc.</p>
+      <span class="file">03-triage-editor.html</span>
+    </a>
+
+    <a class="card" href="examples/04-status-report.html">
+      <div class="fingerprint" aria-hidden="true">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none">
+          <!-- shipped lane -->
+          <rect x="6"   y="6"  width="208" height="13" rx="2" fill="#15803d" opacity=".18"/>
+          <rect x="6"   y="6"  width="3"   height="13" fill="#15803d"/>
+          <g fill="#15803d" opacity=".7">
+            <rect x="14"  y="11" width="28" height="3" rx="1"/>
+            <rect x="46"  y="11" width="22" height="3" rx="1"/>
+            <rect x="72"  y="11" width="32" height="3" rx="1"/>
+          </g>
+          <!-- in flight lane -->
+          <rect x="6"   y="22" width="208" height="13" rx="2" fill="#d97706" opacity=".18"/>
+          <rect x="6"   y="22" width="3"   height="13" fill="#d97706"/>
+          <g fill="#d97706" opacity=".7">
+            <rect x="14"  y="27" width="32" height="3" rx="1"/>
+            <rect x="50"  y="27" width="24" height="3" rx="1"/>
+          </g>
+          <!-- blocked lane -->
+          <rect x="6"   y="38" width="208" height="13" rx="2" fill="#b91c1c" opacity=".18"/>
+          <rect x="6"   y="38" width="3"   height="13" fill="#b91c1c"/>
+          <g fill="#b91c1c" opacity=".7">
+            <rect x="14"  y="43" width="40" height="3" rx="1"/>
+          </g>
+        </svg>
+      </div>
+      <span class="num">04</span>
+      <span class="cat">Report</span>
+      <h3>Weekly status report</h3>
+      <p>Shipped / in flight / blocked, color-coded, 14 items in 90 seconds of reading. Inline sparkline of PR throughput, asks separated from the body. Designed for the skim.</p>
+      <span class="file">04-status-report.html</span>
+    </a>
+
+    <a class="card" href="examples/05-flowchart.html">
+      <div class="fingerprint" aria-hidden="true">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none">
+          <defs>
+            <marker id="fpa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+          <g fill="none" stroke="currentColor" stroke-width="1.2">
+            <rect x="6"    y="20" width="36" height="16" rx="2"/>
+            <rect x="60"   y="20" width="46" height="16" rx="2"/>
+            <rect x="124"  y="6"  width="46" height="16" rx="2"/>
+            <rect x="124"  y="34" width="46" height="16" rx="2"/>
+            <rect x="186"  y="20" width="28" height="16" rx="2"/>
+          </g>
+          <g fill="none" stroke="currentColor" stroke-width="1.2" marker-end="url(#fpa)" opacity=".7">
+            <line x1="42"  y1="28" x2="58"  y2="28"/>
+            <line x1="106" y1="24" x2="122" y2="14"/>
+            <line x1="106" y1="32" x2="122" y2="42"/>
+            <line x1="170" y1="14" x2="184" y2="24"/>
+            <line x1="170" y1="42" x2="184" y2="32"/>
+          </g>
+        </svg>
+      </div>
+      <span class="num">05</span>
+      <span class="cat">Diagram</span>
+      <h3>Annotated deploy pipeline</h3>
+      <p>Real flowchart drawn as inline SVG — nodes, edges, happy path in green, failure paths dashed in red. Click any step for what runs there, expected duration, and the failure mode.</p>
+      <span class="file">05-flowchart.html</span>
+    </a>
+
+    <a class="card" href="examples/06-deck.html">
+      <div class="fingerprint" aria-hidden="true">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none">
+          <g fill="none" stroke="currentColor" stroke-width="1.4">
+            <rect x="6" y="6" width="208" height="34" rx="3"/>
+          </g>
+          <!-- big slide content -->
+          <g fill="currentColor" opacity=".55">
+            <rect x="78" y="16" width="64" height="3"/>
+            <rect x="68" y="22" width="84" height="2"/>
+            <rect x="84" y="28" width="52" height="2"/>
+          </g>
+          <!-- thumbnail strip -->
+          <g fill="none" stroke="currentColor" stroke-width="1" opacity=".5">
+            <rect x="6"   y="44" width="22" height="8" rx="1"/>
+            <rect x="32"  y="44" width="22" height="8" rx="1"/>
+            <rect x="58"  y="44" width="22" height="8" rx="1"/>
+            <rect x="84"  y="44" width="22" height="8" rx="1"/>
+          </g>
+          <rect x="110" y="44" width="22" height="8" rx="1" fill="currentColor" opacity=".7"/>
+          <g fill="none" stroke="currentColor" stroke-width="1" opacity=".5">
+            <rect x="136" y="44" width="22" height="8" rx="1"/>
+            <rect x="162" y="44" width="22" height="8" rx="1"/>
+          </g>
+        </svg>
+      </div>
+      <span class="num">06</span>
+      <span class="cat">Deck</span>
+      <h3>The case for HTML over markdown — a deck</h3>
+      <p>Ten slides on the thesis, navigable with arrow keys. Self-referential by design: a slide deck arguing for HTML, in HTML. Press <code>F</code> for fullscreen.</p>
+      <span class="file">06-deck.html</span>
+    </a>
+
+  </div>
+</section>
+
+<!-- ─── what's in the skill (hub-and-spokes) ────────────── -->
+<section class="structure" id="whats-in-it">
+  <div class="head">
+    <h2>What's in the skill</h2>
+    <span class="cat">SKILL.md + 8 references</span>
+  </div>
+  <p class="intro"><code>SKILL.md</code> is the entry point. It teaches recognition (when does a request want HTML?), the universal rules every artifact must follow, and the carve-outs. Each per-category reference is pulled in only when the task fits — most artifacts only need one or two.</p>
+
+  <div class="hub-wrap">
+    <svg viewBox="0 0 760 360" role="img" aria-labelledby="hub-title" style="width:100%;height:auto">
+      <title id="hub-title">Skill structure: SKILL.md at the center, eight reference files as spokes</title>
+
+      <!-- spokes -->
+      <g fill="none" stroke="currentColor" stroke-width="1" opacity=".25" stroke-dasharray="3 3">
+        <line x1="380" y1="180" x2="160" y2="60"/>
+        <line x1="380" y1="180" x2="380" y2="40"/>
+        <line x1="380" y1="180" x2="600" y2="60"/>
+        <line x1="380" y1="180" x2="700" y2="180"/>
+        <line x1="380" y1="180" x2="600" y2="300"/>
+        <line x1="380" y1="180" x2="380" y2="320"/>
+        <line x1="380" y1="180" x2="160" y2="300"/>
+        <line x1="380" y1="180" x2="60"  y2="180"/>
+      </g>
+
+      <!-- spoke labels (references) -->
+      <g font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="currentColor">
+        <g transform="translate(160, 60)">
+          <rect x="-92" y="-15" width="184" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">exploration-and-planning</text>
+        </g>
+        <g transform="translate(380, 40)">
+          <rect x="-78" y="-15" width="156" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">code-review-and-pr</text>
+        </g>
+        <g transform="translate(600, 60)">
+          <rect x="-86" y="-15" width="172" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">design-and-prototypes</text>
+        </g>
+        <g transform="translate(700, 180)">
+          <rect x="-58" y="-15" width="116" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">diagrams</text>
+        </g>
+        <g transform="translate(600, 300)">
+          <rect x="-90" y="-15" width="180" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">reports-and-research</text>
+        </g>
+        <g transform="translate(380, 320)">
+          <rect x="-44" y="-15" width="88" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">decks</text>
+        </g>
+        <g transform="translate(160, 300)">
+          <rect x="-66" y="-15" width="132" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" y="5">custom-editors</text>
+        </g>
+        <g transform="translate(60, 180)">
+          <rect x="-48" y="-15" width="180" height="30" rx="4" fill="var(--surface)" stroke="var(--rule-strong)" stroke-width="1"/>
+          <text text-anchor="middle" x="42" y="5">matching-your-style</text>
+        </g>
+      </g>
+
+      <!-- center hub -->
+      <g transform="translate(380, 180)">
+        <circle r="58" fill="var(--accent)" opacity=".09"/>
+        <circle r="48" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text text-anchor="middle" y="-3" font-family="ui-monospace, monospace" font-size="13" font-weight="600" fill="var(--accent)">SKILL.md</text>
+        <text text-anchor="middle" y="14" font-family="ui-sans-serif, sans-serif" font-size="11" fill="var(--ink-soft)">always loaded</text>
+      </g>
+    </svg>
+  </div>
+
+  <ul class="hub-fallback" aria-hidden="false">
+    <li class="hub-center"><code>SKILL.md</code><span>recognition heuristic, universal rules, carve-outs · always loaded</span></li>
+    <li><code>references/exploration-and-planning</code></li>
+    <li><code>references/code-review-and-pr</code></li>
+    <li><code>references/design-and-prototypes</code></li>
+    <li><code>references/diagrams-and-illustrations</code></li>
+    <li><code>references/reports-and-research</code></li>
+    <li><code>references/decks</code></li>
+    <li><code>references/custom-editors</code></li>
+    <li><code>references/matching-your-style</code></li>
+  </ul>
+
+  <div class="hub-legend">
+    <div class="item"><span class="dot" style="background:var(--accent)"></span><span><b>SKILL.md</b> — recognition heuristic, universal rules, carve-outs. Always in context.</span></div>
+    <div class="item"><span class="dot" style="background:var(--ink-mute);opacity:.5"></span><span><b>references/</b> — pulled in on demand by the matching task type.</span></div>
+  </div>
+</section>
+
+<!-- ─── stays out of the way for ───────────────────────── -->
+<section class="carveout" id="carveouts">
+  <div class="head">
+    <h2>Stays out of the way for</h2>
+    <span class="cat">where markdown still wins</span>
+  </div>
+  <p class="intro">A skill that mechanically rewrote every prompt as HTML would be worse than no skill — it would obscure the cases where markdown is genuinely the right answer. The recognition heuristic in <code>SKILL.md</code> explicitly defers to markdown for the categories below.</p>
+
+  <div class="carve-list">
+    <div class="carve">
+      <div class="strike" aria-hidden="true"></div>
+      <div>
+        <h3>Conversational chat replies</h3>
+        <p>"What does this regex do?" gets answered in chat. The skill doesn't manufacture a deliverable for a question that wants a sentence.</p>
+      </div>
+    </div>
+    <div class="carve">
+      <div class="strike" aria-hidden="true"></div>
+      <div>
+        <h3>Code-only outputs</h3>
+        <p>"Write a hash function" gets the hash function. No wrapping document, no pre-amble — just the code, the way the user asked.</p>
+      </div>
+    </div>
+    <div class="carve">
+      <div class="strike" aria-hidden="true"></div>
+      <div>
+        <h3>Quick three-bullet summaries</h3>
+        <p>Things the reader will scan once and discard. Markdown bullets are exactly the right shape; HTML structure would be ceremony.</p>
+      </div>
+    </div>
+    <div class="carve">
+      <div class="strike" aria-hidden="true"></div>
+      <div>
+        <h3>Files that live in git over time</h3>
+        <p>Specs and design docs reviewed in PRs across many revisions. HTML diffs are noisy; markdown diffs cleanly. The skill prefers markdown for these even when HTML would render better.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── the meta (worry/response) ───────────────────────── -->
+<section class="meta" id="meta">
+  <div class="wrap-narrow">
+    <h2>The meta</h2>
+
+    <blockquote>
+      I'm a little bit afraid that people will read this article and turn it into a /html skill or something. While there might be some value in that, I want to emphasize that you don't need to do much to get Claude to do this.
+      <cite>— Thariq Shihipar, <i>The Unreasonable Effectiveness of HTML</i></cite>
+    </blockquote>
+
+    <p>That worry is right. A "/html skill" that mechanically converted every prompt into HTML would be exactly the bad outcome — it would obscure where markdown wins, and it would calcify into the default-AI aesthetic of gradient cards and emoji headers. This skill tries to be the version that doesn't do that.</p>
+
+    <dl class="wr">
+      <dt>Worry</dt>
+      <dd>A mechanical "always-output-HTML" rule.</dd>
+      <dt class="r">Response</dt>
+      <dd>A <b>recognition heuristic</b> in <code>SKILL.md</code>: HTML when content benefits from layout, color, diagrams, or interactivity; markdown otherwise. The carve-outs above are explicit, not implied.</dd>
+
+      <dt>Worry</dt>
+      <dd>The default-AI aesthetic creeping in.</dd>
+      <dt class="r">Response</dt>
+      <dd><code>matching-your-style.md</code> ships with an explicit <b>"avoid"</b> list: gradient hero sections, four shades of indigo, emoji-decorated headers, glass morphism. Plus a baseline typographic CSS that doesn't lean on Tailwind cards.</dd>
+
+      <dt>Worry</dt>
+      <dd>People skipping the prompting fundamentals.</dd>
+      <dt class="r">Response</dt>
+      <dd>The references teach <b>patterns, not templates</b>. The model still has to think about what the artifact wants to do — what's load-bearing in a comparison, what makes an explainer's demo worth including, what export an editor needs to round-trip.</dd>
+    </dl>
+
+    <p style="margin-top:2em">Whether it succeeds is your call. The artifacts above are the skill's work; if any of them feels like it would have been better as markdown, that's a bug — open an issue.</p>
+  </div>
+</section>
+
+<!-- ─── install ─────────────────────────────────────────── -->
+<section class="install" id="install">
+  <div class="head">
+    <h2>Install</h2>
+    <span class="cat">claude.ai · Claude Code</span>
+  </div>
+
+  <div class="install-cards">
+    <div class="install-card">
+      <div class="target">Claude.ai</div>
+      <h3>Upload the .skill file</h3>
+      <ol>
+        <li>Download <a href="https://github.com/dogum/html-artifacts/raw/main/html-artifacts.skill"><code>html-artifacts.skill</code></a> from the repo.</li>
+        <li>In Claude.ai, go to <em>Settings → Capabilities → Skills</em>.</li>
+        <li>Upload the <code>.skill</code> file.</li>
+      </ol>
+      <span class="time">~30 seconds · available in any new conversation</span>
+    </div>
+
+    <div class="install-card">
+      <div class="target">Claude Code</div>
+      <h3>Drop the folder into ~/.claude/skills/</h3>
+      <ol>
+        <li>Clone the repo.</li>
+        <li>Copy <code>skill/</code> into your skills directory.</li>
+      </ol>
+<pre>git clone https://github.com/dogum/html-artifacts.git
+cp -r html-artifacts/skill ~/.claude/skills/html-artifacts</pre>
+      <span class="time">~30 seconds</span>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- ─── footer ──────────────────────────────────────────── -->
+<footer class="foot">
+  <div class="wrap">
+    <div>
+      <h3>Lineage</h3>
+      <p>Built on <a href="https://thariqs.github.io/html-effectiveness/">"The Unreasonable Effectiveness of HTML"</a> by Thariq Shihipar (Anthropic). The thesis, the categories, and several of the example shapes are his — the recognition heuristic and the carve-outs are extensions, not the original.</p>
+      <p>This page is itself one of the skill's artifacts, in keeping with Thariq's companion site, which made the same gag first.</p>
+    </div>
+    <div>
+      <h3>Links</h3>
+      <ul>
+        <li><a href="https://github.com/dogum/html-artifacts">GitHub repo</a></li>
+        <li><a href="https://github.com/dogum/html-artifacts/raw/main/html-artifacts.skill">Download <code>.skill</code></a></li>
+        <li><a href="https://thariqs.github.io/html-effectiveness/">Thariq's companion site</a></li>
+        <li><a href="https://github.com/anthropics/skills">Anthropic's skills repo</a></li>
+      </ul>
+    </div>
+    <div class="colophon">
+      Apache 2.0 · Charter / Inter / IBM Plex Mono · No build step. No tracking. Single <code>index.html</code> + 6 example files. <a href="https://github.com/dogum/html-artifacts/blob/main/docs/index.html">View source →</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
